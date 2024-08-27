@@ -3,17 +3,16 @@ const socket = io();
 if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
         (position) => {
-            const { latitude, longitude, accuracy } = position.coords;
-            const accuracyKm = (accuracy / 1000).toFixed(2); // Convert accuracy to kilometers and round to 2 decimal places
-            console.log(`Current Latitude: ${latitude}, Longitude: ${longitude}, Accuracy: ${accuracyKm} km`);
-            socket.emit("send-location", { latitude, longitude, accuracy });
+            const { latitude, longitude } = position.coords;
+            console.log(`Current Latitude: ${latitude}, Longitude: ${longitude}`);
+            socket.emit("send-location", { latitude, longitude });
         },
         (error) => {
             console.error(error);
         },
         {
             enableHighAccuracy: true,
-            timeout: 1000,
+            timeout: 500,
             maximumAge: 0,
         }
     );
@@ -30,16 +29,13 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 const markers = {};
 
 socket.on("recieve-location", (data) => {
-    const { id, latitude, longitude, accuracy } = data;
-    const accuracyKm = (accuracy / 1000).toFixed(2); // Convert accuracy to kilometers and round to 2 decimal places
-    
+    const { id, latitude, longitude } = data;
+
     if (markers[id]) {
         markers[id].setLatLng([latitude, longitude]);
-        // Optionally update marker with new accuracy information
-        markers[id].bindPopup(`Accuracy: ${accuracyKm} km`).openPopup();
+        markers[id].openPopup();
     } else {
         markers[id] = L.marker([latitude, longitude])
-            .bindPopup(`Accuracy: ${accuracyKm} km`)
             .addTo(map);
     }
     map.setView([latitude, longitude]);
